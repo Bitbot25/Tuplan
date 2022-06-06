@@ -3,6 +3,7 @@ use crate::Result;
 use unicode_xid::UnicodeXID;
 
 // TODO: Implement a set_line_break function in compiler.rs
+#[repr(u8)]
 pub enum LineBreak {
     CRLF,
     CR,

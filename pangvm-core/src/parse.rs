@@ -92,12 +92,17 @@ impl<'a> ParseStream<'a> {
         &mut self,
         parse_fn: impl FnOnce(&mut ParseStream<'a>) -> Result<R>,
     ) -> Result<R> {
+        // FIXME: Do i need to reset the spans on error?
         // TODO: Maybe we can do something clever here to avoid expensive cloning?
         let original = self.cursor.clone();
         match parse_fn(self) {
             ok @ Ok(_) => ok,
             e @ Err(_) => {
                 self.cursor = original;
+                let index = self.cursor.index();
+                for span in &mut *self.bound_spans.borrow_mut() {
+                    span.end = index;
+                }
                 e
             }
         }

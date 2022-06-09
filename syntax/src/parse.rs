@@ -1,4 +1,6 @@
-use crate::{cursor::Cursor, snapshot::Snapshot, spec, Result, Span};
+#[cfg(feature = "span")]
+use crate::Span;
+use crate::{cursor::Cursor, snapshot::Snapshot, spec, Result};
 
 pub trait Parse: Sized {
     fn parse(stream: &mut ParseStream) -> Result<Self>;
@@ -33,6 +35,7 @@ impl<'a> ParseStream<'a> {
     }
 
     #[inline]
+    #[cfg(feature = "span")]
     pub fn since(&self, snapshot: Snapshot) -> Span {
         Span {
             begin: snapshot.index(),

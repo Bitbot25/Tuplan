@@ -6,9 +6,9 @@ impl From<usize> for Snapshot {
     }
 }
 
-impl Into<usize> for Snapshot {
-    fn into(self) -> usize {
-        self.0
+impl From<Snapshot> for usize {
+    fn from(snap: Snapshot) -> Self {
+        snap.0
     }
 }
 

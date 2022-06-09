@@ -62,7 +62,7 @@ macro_rules! simple_tok_spanned {
                     }
                 }
             } else {
-                simple_tok!($ident,$($chars)+)
+                $crate::simple_tok!($ident,$($chars)+);
             }
         }
     };

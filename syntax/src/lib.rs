@@ -22,3 +22,8 @@ pub trait Spanned {
 }
 
 pub type Result<T> = std::result::Result<T, &'static str>;
+
+// TODO: Create helper methods like these vvvvvvvvvvvvvvvvvvvvvvvvvvv
+/*pub fn parse_stream(input: &str) -> ParseStream {
+    ParseStream::new(input.chars().collect::<Vec<char>>().as_slice())
+}*/

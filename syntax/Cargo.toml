@@ -5,6 +5,8 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["Edvin Flodin <edvin.flodin+syntaxrs@gmail.com>"]
 description = "A library for parsing programming languages."
+documentation = "https://docs.rs/syntax/0.1.0/syntax"
+repository = "https://github.com/Bitbot25/pangvm"
 
 # A message to future me: DON'T FORGET DO UPDATE THE DOCUMENTATION AAAAAAA
 

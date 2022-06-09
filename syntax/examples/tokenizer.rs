@@ -4,11 +4,6 @@ use syntax::{
 };
 use unicode_xid::UnicodeXID;
 
-// NOTE: This is all just experimenting. This should be implemented using macros later i think. Only the core ones like literal should be implemented using raw code.
-// TODO: Make a #[derive(Parse)] when all fields are T: Parse.
-
-// TODO: Make the error messages more epic.
-
 #[derive(Debug)]
 struct LitInt {
     value: i64,
@@ -136,7 +131,6 @@ enum Symbol {
 
 impl Parse for Symbol {
     fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
-        // FIXME: This is a dumb way to do shit.
         let ident: Ident = stream
             .parse()
             .map_err(|_e| "Expected identifier, `function`, `let` or `if`.")?;
@@ -178,7 +172,7 @@ impl Parse for Punctuation {
     }
 }
 
-// TODO: Make a #[derive(Spanned)]
+// NOTE: A #[derive(Parse)] and #[derive(Spanned)] will probably be added in the future.
 #[derive(Debug)]
 enum Token {
     Punctuation(Punctuation),
@@ -200,9 +194,6 @@ impl Parse for Token {
         }
     }
 }
-
-// TODO: Maybe i should implement a Staging struct?
-// TODO: Make my own utf8.rs to dynamically (but still have a &'a str) or just get the chars before in a way without using iterators?
 
 const CODE: &str = "5+2";
 

@@ -1,10 +1,12 @@
-use crate::{cursor::Cursor, spec, Result, Span, snapshot::Snapshot};
+use crate::{cursor::Cursor, snapshot::Snapshot, spec, Result, Span};
 
 pub trait Parse: Sized {
     fn parse(stream: &mut ParseStream) -> Result<Self>;
     fn parse_from_str(input: &str) -> Result<Self> {
         // FIXME: This could be alot cleaner if the cursor just "iterated" over utf-8 codepoints on a str.
-        Self::parse(&mut ParseStream::new(input.chars().collect::<Vec<char>>().as_slice()))
+        Self::parse(&mut ParseStream::new(
+            input.chars().collect::<Vec<char>>().as_slice(),
+        ))
     }
 }
 
@@ -32,14 +34,17 @@ impl<'a> ParseStream<'a> {
 
     #[inline]
     pub fn since(&self, snapshot: Snapshot) -> Span {
-        Span { begin: snapshot.index(), end: self.cursor.index() }
-    } 
+        Span {
+            begin: snapshot.index(),
+            end: self.cursor.index(),
+        }
+    }
 
     #[inline]
     pub fn parse<P: Parse>(&mut self) -> Result<P> {
         P::parse(self)
     }
-    
+
     /// Parse until the cursor is empty or there are only whitespaces left.
     pub fn exhaustive_parse<P: Parse>(&mut self) -> Result<Vec<P>> {
         let mut results = Vec::new();

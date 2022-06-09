@@ -1,5 +1,6 @@
 use syntax::{
-    parse::{Parse, ParseStream}, simple_tok_spanned, spec, Span, Spanned,
+    parse::{Parse, ParseStream},
+    simple_tok_spanned, spec, Span, Spanned,
 };
 use unicode_xid::UnicodeXID;
 

@@ -7,10 +7,7 @@ pub struct Cursor<'a> {
 
 impl<'a> Cursor<'a> {
     pub fn new(slice: &'a [char]) -> Cursor<'a> {
-        Cursor {
-            slice,
-            index: 0,
-        }
+        Cursor { slice, index: 0 }
     }
 
     #[inline]

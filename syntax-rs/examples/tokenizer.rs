@@ -1,4 +1,4 @@
-use syntax::{
+use syntax_rs::{
     parse::{Parse, ParseStream},
     simple_tok_spanned, spec, Span, Spanned,
 };
@@ -10,8 +10,8 @@ struct LitInt {
 }
 
 impl Parse for LitInt {
-    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
-        fn to_u32(chars: &[char]) -> syntax::Result<u32> {
+    fn parse(stream: &mut ParseStream) -> syntax_rs::Result<Self> {
+        fn to_u32(chars: &[char]) -> syntax_rs::Result<u32> {
             if chars.len() == 0 {
                 return Err("Expected integer.");
             }
@@ -42,7 +42,7 @@ struct LitStr {
 }
 
 impl Parse for LitStr {
-    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax_rs::Result<Self> {
         stream.parse::<Quote>()?;
 
         let inside = stream.try_parse(|stream| {
@@ -67,7 +67,7 @@ enum Literal {
 }
 
 impl Parse for Literal {
-    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax_rs::Result<Self> {
         if let Ok(lit_int) = stream.parse::<LitInt>() {
             Ok(Literal::Int(lit_int))
         } else if let Ok(lit_str) = stream.parse::<LitStr>() {
@@ -97,7 +97,7 @@ impl Spanned for Ident {
 }
 
 impl Parse for Ident {
-    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax_rs::Result<Self> {
         stream.try_parse(|stream| {
             let snap = stream.snapshot();
             let mut first_c = false;
@@ -130,7 +130,7 @@ enum Symbol {
 }
 
 impl Parse for Symbol {
-    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax_rs::Result<Self> {
         let ident: Ident = stream
             .parse()
             .map_err(|_e| "Expected identifier, `function`, `let` or `if`.")?;
@@ -153,7 +153,7 @@ enum Punctuation {
 }
 
 impl Parse for Punctuation {
-    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax_rs::Result<Self> {
         stream.try_parse(|stream| {
             Ok(
                 match stream
@@ -181,7 +181,7 @@ enum Token {
 }
 
 impl Parse for Token {
-    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax_rs::Result<Self> {
         stream.skip_all(spec::is_whitespace);
         if let Ok(lit) = stream.parse::<Literal>() {
             Ok(Token::Literal(lit))

@@ -1,0 +1,18 @@
+[package]
+name = "syntax"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["Edvin Flodin <edvin.flodin+syntaxrs@gmail.com>"]
+description = "A library for parsing programming languages."
+
+# A message to future me: DON'T FORGET DO UPDATE THE DOCUMENTATION AAAAAAA
+
+[dependencies]
+unicode-xid = "0.2.3"
+cfg-if = "1.0.0"
+
+[features]
+char_spec = []
+span = []
+default = ["char_spec", "span"]

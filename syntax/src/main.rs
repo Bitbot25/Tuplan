@@ -1,6 +1,5 @@
-use pangvm_core::{
-    parse::{Parse, ParseStream},
-    spec, Span, Spanned,
+use syntax::{
+    parse::{Parse, ParseStream}, simple_tok_spanned, spec, Span, Spanned,
 };
 use unicode_xid::UnicodeXID;
 
@@ -15,8 +14,8 @@ struct LitInt {
 }
 
 impl Parse for LitInt {
-    fn parse(stream: &mut ParseStream) -> pangvm_core::Result<Self> {
-        fn to_u32(chars: &[char]) -> pangvm_core::Result<u32> {
+    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+        fn to_u32(chars: &[char]) -> syntax::Result<u32> {
             if chars.len() == 0 {
                 return Err("Expected integer.");
             }
@@ -29,7 +28,7 @@ impl Parse for LitInt {
             Ok(number)
         }
 
-        stream.virtual_parse(|stream| {
+        stream.try_parse(|stream| {
             let negative = stream.cur().consume('-');
             let mut value = to_u32(stream.cur().advance_while(|c| c.is_digit(10)))? as i64;
             if negative {
@@ -47,10 +46,10 @@ struct LitStr {
 }
 
 impl Parse for LitStr {
-    fn parse(stream: &mut ParseStream) -> pangvm_core::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
         stream.parse::<Quote>()?;
 
-        let inside = stream.virtual_parse(|stream| {
+        let inside = stream.try_parse(|stream| {
             Ok(LitStr {
                 val: stream
                     .cur()
@@ -72,7 +71,7 @@ enum Literal {
 }
 
 impl Parse for Literal {
-    fn parse(stream: &mut ParseStream) -> pangvm_core::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
         if let Ok(lit_int) = stream.parse::<LitInt>() {
             Ok(Literal::Int(lit_int))
         } else if let Ok(lit_str) = stream.parse::<LitStr>() {
@@ -83,22 +82,12 @@ impl Parse for Literal {
     }
 }
 
-#[derive(Debug)]
-struct Quote;
-
-impl Parse for Quote {
-    fn parse(stream: &mut ParseStream) -> pangvm_core::Result<Self> {
-        stream.virtual_parse(|stream| match stream.cur().advance() {
-            Some('\"') => Ok(Quote),
-            _ => Err("Expected '\"'"),
-        })
-    }
-}
+simple_tok_spanned!(Quote, '\"');
 
 #[derive(Debug)]
 struct Ident {
     string: String,
-    span: Span
+    span: Span,
 }
 
 impl Spanned for Ident {
@@ -112,9 +101,9 @@ impl Spanned for Ident {
 }
 
 impl Parse for Ident {
-    fn parse(stream: &mut ParseStream) -> pangvm_core::Result<Self> {
-        stream.virtual_parse(|stream| {
-            let span = stream.push_span();
+    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+        stream.try_parse(|stream| {
+            let snap = stream.snapshot();
             let mut first_c = false;
             let slice = stream.cur().advance_while(|c| {
                 if first_c {
@@ -125,12 +114,11 @@ impl Parse for Ident {
                 }
             });
             if slice.is_empty() {
-                println!("no identifier");
                 Err("Expected identifier.")
             } else {
                 Ok(Ident {
                     string: slice.into_iter().collect(),
-                    span: span.into_inner(),
+                    span: stream.since(snap),
                 })
             }
         })
@@ -146,7 +134,7 @@ enum Symbol {
 }
 
 impl Parse for Symbol {
-    fn parse(stream: &mut ParseStream) -> pangvm_core::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
         // FIXME: This is a dumb way to do shit.
         let ident: Ident = stream
             .parse()
@@ -170,8 +158,8 @@ enum Punctuation {
 }
 
 impl Parse for Punctuation {
-    fn parse(stream: &mut ParseStream) -> pangvm_core::Result<Self> {
-        stream.virtual_parse(|stream| {
+    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
+        stream.try_parse(|stream| {
             Ok(
                 match stream
                     .cur()
@@ -189,6 +177,7 @@ impl Parse for Punctuation {
     }
 }
 
+// TODO: Make a #[derive(Spanned)]
 #[derive(Debug)]
 enum Token {
     Punctuation(Punctuation),
@@ -197,7 +186,7 @@ enum Token {
 }
 
 impl Parse for Token {
-    fn parse(stream: &mut ParseStream) -> pangvm_core::Result<Self> {
+    fn parse(stream: &mut ParseStream) -> syntax::Result<Self> {
         stream.skip_all(spec::is_whitespace);
         if let Ok(lit) = stream.parse::<Literal>() {
             Ok(Token::Literal(lit))
@@ -212,8 +201,9 @@ impl Parse for Token {
 }
 
 // TODO: Maybe i should implement a Staging struct?
+// TODO: Make my own utf8.rs to dynamically (but still have a &'a str) or just get the chars before in a way without using iterators?
 
-const CODE: &str = "€";
+const CODE: &str = "5+2";
 
 fn main() {
     let chars: Vec<char> = CODE.chars().collect();

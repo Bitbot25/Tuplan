@@ -2,7 +2,6 @@ use crate::parse::{Parse, ParseStream};
 use crate::Result;
 use unicode_xid::UnicodeXID;
 
-// TODO: Implement a set_line_break function in compiler.rs
 #[repr(u8)]
 pub enum LineBreak {
     CRLF,
@@ -13,7 +12,7 @@ pub enum LineBreak {
 
 impl Parse for LineBreak {
     fn parse(stream: &mut ParseStream) -> Result<Self> {
-        stream.virtual_parse(|stream| {
+        stream.try_parse(|stream| {
             let cur = stream.cur();
             Ok(match cur.advance().ok_or("Expected linebreak.")? {
                 '\u{000D}' => {
@@ -37,6 +36,7 @@ pub trait UnicodeSpec {
     fn is_whitespace(&self) -> bool;
 }
 
+#[cfg(feature = "char_spec")]
 impl UnicodeSpec for char {
     fn is_xid_start(&self) -> bool {
         <Self as UnicodeXID>::is_xid_start(*self)

@@ -1,19 +1,16 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{Span, parse::ParseStream};
-
 // FIXME: This is slow to construct. Maybe implement utf8.rs so that we can get the next unicode code point? It would be alot faster.
-// TODO: Change Rc<RefCell<T>> to just a raw pointer or reference of some kind.
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Cursor<'a> {
     slice: &'a [char],
     index: usize,
-    bound_spans: Rc<RefCell<Vec<Span>>>,
 }
 
 impl<'a> Cursor<'a> {
-    pub fn new(slice: &'a [char], bound_spans: Rc<RefCell<Vec<Span>>>) -> Cursor<'a> {
-        Cursor { slice, index: 0, bound_spans }
+    pub fn new(slice: &'a [char]) -> Cursor<'a> {
+        Cursor {
+            slice,
+            index: 0,
+        }
     }
 
     #[inline]
@@ -38,14 +35,10 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    // FIXME: How would i make the spans update in real-time? This wouldn't be a problem when we remove the reference to the stream in virtual_parse
     pub fn advance(&mut self) -> Option<char> {
         let c = self.slice.get(self.index).copied();
         if c.is_some() {
             self.index += 1;
-            for span in &mut *self.bound_spans.borrow_mut() {
-                (*span).end = self.index;
-            }
         }
         c
     }
@@ -63,17 +56,15 @@ impl<'a> Cursor<'a> {
         while !self.is_empty() && pred(self.peek0().unwrap()) {
             self.index += 1;
         }
-        // NOTE: Is this correct?
-        for span in &mut *self.bound_spans.borrow_mut() {
-            (*span).end = self.index;
-        }
         &self.slice[begin..self.index]
     }
 
+    #[inline]
     pub fn index(&self) -> usize {
         self.index
     }
 
+    #[inline]
     pub fn iter<'c>(&'c self) -> Iter<'a, 'c> {
         Iter(0, self)
     }

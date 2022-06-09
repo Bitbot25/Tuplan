@@ -6,7 +6,7 @@ Add this to your `Cargo.toml`:
 
 ```TOML
 [dependencies]
-syntax = "0.1.0"
+syntax-rs = "0.1.1"
 ```
 
 ## Features

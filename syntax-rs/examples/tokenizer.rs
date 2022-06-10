@@ -1,5 +1,3 @@
-use std::str::Chars;
-
 use syntax_rs::{
     parse::{Parse, ParseStream},
     simple_tok_spanned, spec, Span, Spanned,
@@ -195,7 +193,7 @@ impl Parse for Token {
     }
 }
 
-const CODE: &str = "5+2+1+2+1+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2+2";
+const CODE: &str = "1+2+3+4+5+6+7+8+9+10";
 
 fn main() {
     println!("{:?}", syntax_rs::exhaustive_parse::<Token>(CODE));

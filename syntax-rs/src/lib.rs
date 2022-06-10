@@ -34,6 +34,7 @@ pub fn parse_stream(input: &str) -> ParseStream {
     ParseStream::new(input)
 }
 
+#[inline]
 pub fn parse<T: Parse>(input: &str) -> Result<T> {
     T::parse(&mut parse_stream(input))
 }

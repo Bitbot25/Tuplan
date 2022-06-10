@@ -7,13 +7,15 @@ macro_rules! simple_tok {
         impl $crate::parse::Parse for $ident {
             fn parse(stream: &mut $crate::parse::ParseStream) -> $crate::Result<$ident> {
                 match stream.cur().peek_n($str.len()) {
-                    Some(array) => if array == $str {
-                        // TODO: This can be optimized
-                        stream.cur().advance_n($str.len());
-                        Ok($ident)
-                    } else {
-                        Err($crate::concat_all!("Expected `", $str, "`."))
-                    },
+                    Some(array) => {
+                        if array == $str {
+                            // TODO: This can be optimized
+                            stream.cur().advance_n($str.len());
+                            Ok($ident)
+                        } else {
+                            Err($crate::concat_all!("Expected `", $str, "`."))
+                        }
+                    }
                     None => Err($crate::concat_all!("Found EOF but expected `", $str, "`.")),
                 }
             }

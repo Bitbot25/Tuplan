@@ -1,11 +1,12 @@
-#![feature(str_internals)]
 // TODO: Make different presets for languages with a preset-<language> feature.
 // TODO: Add no_std feature.
+// TODO: Add some benchmarks.
 
-use parse::{ParseStream, Parse};
+use parse::{Parse, ParseStream};
 
 pub mod compiler;
 pub mod cursor;
+pub mod debug;
 pub mod macros;
 pub mod parse;
 pub mod snapshot;
@@ -31,7 +32,7 @@ pub type Result<T> = std::result::Result<T, &'static str>;
 #[inline]
 pub fn parse_stream(input: &str) -> ParseStream {
     ParseStream::new(input)
-} 
+}
 
 pub fn parse<T: Parse>(input: &str) -> Result<T> {
     T::parse(&mut parse_stream(input))
@@ -42,7 +43,7 @@ pub fn exhaustive_parse<T: Parse>(input: &str) -> Result<Vec<T>> {
     let mut stream = parse_stream(input);
     let mut results = Vec::new();
     while !stream.is_empty() && !stream.is_only_whitespaces() {
-        results.push(T::parse(&mut stream)?);
+        results.push(stream.parse::<T>()?);
     }
     Ok(results)
 }

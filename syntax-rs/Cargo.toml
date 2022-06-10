@@ -17,4 +17,5 @@ cfg-if = "1.0.0"
 [features]
 char_spec = []
 span = []
+debug = []
 default = ["char_spec", "span"]

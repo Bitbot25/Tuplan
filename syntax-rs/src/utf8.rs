@@ -1,6 +1,5 @@
 //! This file is pretty much just a copy of the str internals of utf-8 codepoints.
 
-
 /// Returns the initial codepoint accumulator for the first byte.
 /// The first byte is special, only want bottom 5 bits for width 2, 4 bits
 /// for width 3, and 3 bits for width 4.
@@ -17,15 +16,17 @@ const fn utf8_acc_cont_byte(ch: u32, byte: u8) -> u32 {
 
 /// Checks whether the byte is a UTF-8 continuation byte (i.e., starts with the
 /// bits `10`).
+#[allow(dead_code)]
 #[inline]
 pub const fn utf8_is_cont_byte(byte: u8) -> bool {
     (byte as i8) < -64
 }
 
 #[inline]
-pub unsafe fn next_code_point<'a>(bytes: &[u8], index: &mut usize) -> Option<u32> {
+pub unsafe fn next_code_point(bytes: &[u8], index: &mut usize) -> Option<u32> {
     // Decode UTF-8
     let x = *bytes.get(*index)?;
+    *index += 1;
     if x < 128 {
         return Some(x as u32);
     }
@@ -36,8 +37,8 @@ pub unsafe fn next_code_point<'a>(bytes: &[u8], index: &mut usize) -> Option<u32
     let init = utf8_first_byte(x, 2);
     // SAFETY: `bytes` produces an UTF-8-like string,
     // so the iterator must produce a value here.
-    *index += 1;
     let y = *bytes.get(*index).unwrap_unchecked();
+    *index += 1;
     let mut ch = utf8_acc_cont_byte(init, y);
     if x >= 0xE0 {
         // [[x y z] w] case
@@ -53,8 +54,8 @@ pub unsafe fn next_code_point<'a>(bytes: &[u8], index: &mut usize) -> Option<u32
             // use only the lower 3 bits of `init`
             // SAFETY: `bytes` produces an UTF-8-like string,
             // so the iterator must produce a value here.
-            *index += 1;
             let w = *bytes.get(*index).unwrap_unchecked();
+            *index += 1;
             ch = (init & 7) << 18 | utf8_acc_cont_byte(y_z, w);
         }
     }
@@ -63,7 +64,7 @@ pub unsafe fn next_code_point<'a>(bytes: &[u8], index: &mut usize) -> Option<u32
 }
 
 #[inline]
-pub unsafe fn peek_code_point<'a>(bytes: &[u8], begin_index: usize) -> Option<u32> {
+pub unsafe fn peek_code_point(bytes: &[u8], begin_index: usize) -> Option<u32> {
     // Decode UTF-8
     let x = *bytes.get(begin_index)?;
     if x < 128 {
@@ -76,14 +77,14 @@ pub unsafe fn peek_code_point<'a>(bytes: &[u8], begin_index: usize) -> Option<u3
     let init = utf8_first_byte(x, 2);
     // SAFETY: `bytes` produces an UTF-8-like string,
     // so the iterator must produce a value here.
-    let y = unsafe { *bytes.get(begin_index + 1).unwrap_unchecked() };
+    let y = *bytes.get(begin_index + 1).unwrap_unchecked();
     let mut ch = utf8_acc_cont_byte(init, y);
     if x >= 0xE0 {
         // [[x y z] w] case
         // 5th bit in 0xE0 .. 0xEF is always clear, so `init` is still valid
         // SAFETY: `bytes` produces an UTF-8-like string,
         // so the iterator must produce a value here.
-        let z = unsafe { *bytes.get(begin_index + 2).unwrap_unchecked() };
+        let z = *bytes.get(begin_index + 2).unwrap_unchecked();
         let y_z = utf8_acc_cont_byte((y & CONT_MASK) as u32, z);
         ch = init << 12 | y_z;
         if x >= 0xF0 {
@@ -91,7 +92,7 @@ pub unsafe fn peek_code_point<'a>(bytes: &[u8], begin_index: usize) -> Option<u3
             // use only the lower 3 bits of `init`
             // SAFETY: `bytes` produces an UTF-8-like string,
             // so the iterator must produce a value here.
-            let w = unsafe { *bytes.get(begin_index + 3).unwrap_unchecked() };
+            let w = *bytes.get(begin_index + 3).unwrap_unchecked();
             ch = (init & 7) << 18 | utf8_acc_cont_byte(y_z, w);
         }
     }

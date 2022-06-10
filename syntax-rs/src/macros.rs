@@ -1,20 +1,20 @@
-// TODO: Add simple_tok_spanned.
 #[macro_export]
 macro_rules! simple_tok {
-    ($ident:ident, $($chars:literal),+) => {
+    ($ident:ident, $str:literal) => {
         #[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
         struct $ident;
 
         impl $crate::parse::Parse for $ident {
             fn parse(stream: &mut $crate::parse::ParseStream) -> $crate::Result<$ident> {
-                match stream.cur().peek_range($crate::count_tt!($($chars)+)) {
-                    Some(array) => if array == &[$($chars),+] {
-                        stream.cur().advance_n($crate::count_tt!($($chars)+));
+                match stream.cur().peek_n($str.len()) {
+                    Some(array) => if array == $str {
+                        // TODO: This can be optimized
+                        stream.cur().advance_n($str.len());
                         Ok($ident)
                     } else {
-                        Err($crate::concat_all!("Expected `", $($chars),+, "`."))
+                        Err($crate::concat_all!("Expected `", $str, "`."))
                     },
-                    None => Err($crate::concat_all!("Found EOF but expected `", $($chars),+, "`.")),
+                    None => Err($crate::concat_all!("Found EOF but expected `", $str, "`.")),
                 }
             }
         }
@@ -38,7 +38,7 @@ macro_rules! spanned_field {
 
 #[macro_export]
 macro_rules! simple_tok_spanned {
-    ($ident:ident, $($chars:literal),+) => {
+    ($ident:ident, $str:literal) => {
         cfg_if::cfg_if! {
             if #[cfg(feature = "span")] {
                 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -50,19 +50,19 @@ macro_rules! simple_tok_spanned {
                 impl $crate::parse::Parse for $ident {
                     fn parse(stream: &mut $crate::parse::ParseStream) -> $crate::Result<$ident> {
                         let index = stream.cur().index();
-                        match stream.cur().peek_range($crate::count_tt!($($chars)+)) {
-                            Some(array) => if array == &[$($chars),+] {
-                                stream.cur().advance_n($crate::count_tt!($($chars)+));
+                        match stream.cur().peek_n($str.len()) {
+                            Some(array) => if array == $str {
+                                stream.cur().advance_n($str.len());
                                 Ok($ident { span: $crate::Span { begin: index, end: stream.cur().index() } })
                             } else {
-                                Err($crate::concat_all!("Expected `", $($chars),+, "`."))
+                                Err($crate::concat_all!("Expected `", $str, "`."))
                             },
-                            None => Err($crate::concat_all!("Found EOF but expected `", $($chars),+, "`.")),
+                            None => Err($crate::concat_all!("Found EOF but expected `", $str, "`.")),
                         }
                     }
                 }
             } else {
-                $crate::simple_tok!($ident,$($chars)+);
+                $crate::simple_tok!($ident,$str);
             }
         }
     };
@@ -76,10 +76,4 @@ macro_rules! concat_all {
     ($single:literal) => {
         $single
     };
-}
-
-#[macro_export]
-macro_rules! count_tt {
-    () => (0usize);
-    ( $x:tt $($xs:tt)* ) => (1usize + $crate::count_tt!($($xs)*));
 }

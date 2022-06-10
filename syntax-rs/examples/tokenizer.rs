@@ -1,3 +1,5 @@
+use std::str::Chars;
+
 use syntax_rs::{
     parse::{Parse, ParseStream},
     simple_tok_spanned, spec, Span, Spanned,
@@ -11,13 +13,15 @@ struct LitInt {
 
 impl Parse for LitInt {
     fn parse(stream: &mut ParseStream) -> syntax_rs::Result<Self> {
-        fn to_u32(chars: &[char]) -> syntax_rs::Result<u32> {
+        fn to_u32(chars: &str) -> syntax_rs::Result<u32> {
             if chars.len() == 0 {
                 return Err("Expected integer.");
             }
             let mut number = 0;
-            for c in chars {
-                let digit = *c as u32 - 0x30;
+
+            // We don't need to do .chars() here because we are only dealing with numbers.
+            for c in chars.as_bytes() {
+                let digit: u32 = *c as u32 - 0x30;
                 number *= 10;
                 number += digit;
             }
@@ -47,11 +51,9 @@ impl Parse for LitStr {
 
         let inside = stream.try_parse(|stream| {
             Ok(LitStr {
-                val: stream
+                val: String::from(stream
                     .cur()
-                    .advance_while(|c| c != '\"')
-                    .into_iter()
-                    .collect(),
+                    .advance_while(|c| c != '\"')),
             })
         });
 
@@ -78,7 +80,7 @@ impl Parse for Literal {
     }
 }
 
-simple_tok_spanned!(Quote, '\"');
+simple_tok_spanned!(Quote, "\"");
 
 #[derive(Debug)]
 struct Ident {
@@ -113,7 +115,7 @@ impl Parse for Ident {
                 Err("Expected identifier.")
             } else {
                 Ok(Ident {
-                    string: slice.into_iter().collect(),
+                    string: String::from(slice),
                     span: stream.since(snap),
                 })
             }
@@ -198,7 +200,5 @@ impl Parse for Token {
 const CODE: &str = "5+2";
 
 fn main() {
-    let chars: Vec<char> = CODE.chars().collect();
-    let mut stream = ParseStream::new(chars.as_slice());
-    println!("{:?}", stream.exhaustive_parse::<Token>());
+    println!("{:?}", syntax_rs::exhaustive_parse::<Token>(CODE));
 }

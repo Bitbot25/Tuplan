@@ -1,12 +1,14 @@
-// FIXME: This is slow to construct. Maybe implement utf8.rs so that we can get the next unicode code point? It would be alot faster.
+use crate::utf8;
+
+// FIXME: Is this a good and fast implementation? We should probably change it to use an implementation of peeking like the Peekable iterator.
 #[derive(Copy, Clone)]
 pub struct Cursor<'a> {
-    slice: &'a [char],
+    slice: &'a str,
     index: usize,
 }
 
 impl<'a> Cursor<'a> {
-    pub fn new(slice: &'a [char]) -> Cursor<'a> {
+    pub fn new(slice: &'a str) -> Cursor<'a> {
         Cursor { slice, index: 0 }
     }
 
@@ -16,42 +18,66 @@ impl<'a> Cursor<'a> {
     }
 
     #[inline]
-    pub fn peek0(&self) -> Option<char> {
-        self.slice.get(self.index).copied()
+    unsafe fn next_code_point_u32(&mut self) -> Option<u32> {
+        utf8::next_code_point(self.slice.as_bytes(), &mut self.index)
     }
 
     #[inline]
-    pub fn peek_range(&self, n: usize) -> Option<&'a [char]> {
-        self.slice.get(self.index..n)
+    unsafe fn peek_code_point_u32(&self) -> Option<u32> {
+        utf8::peek_code_point(self.slice.as_bytes(), self.index)
+    }
+
+    #[inline]
+    pub fn peek0(&self) -> Option<char> {
+        unsafe { self.peek_code_point_u32().map(|val| char::from_u32_unchecked(val)) }
+    }
+
+    #[inline]
+    pub fn peek_n(&self, n: usize) -> Option<&'a str> {
+        let begin = self.index;
+        let mut virtual_index = self.index;
+        for _ in 0..n {
+            unsafe { utf8::next_code_point(self.slice.as_bytes(), &mut virtual_index)?; }
+        }
+        Some(&self.slice[begin..virtual_index])
     }
 
     pub fn consume(&mut self, target: char) -> bool {
-        match self.peek0() {
-            Some(c) => c == target,
+        let mut virtual_index = self.index;
+        let c = unsafe { utf8::next_code_point(self.slice.as_bytes(), &mut virtual_index) };
+        match c {
+            Some(c) if unsafe { char::from_u32_unchecked(c) } == target => {
+                self.index = virtual_index;
+                true
+            },
             _ => false,
         }
     }
 
+    #[inline]
     pub fn advance(&mut self) -> Option<char> {
-        let c = self.slice.get(self.index).copied();
-        if c.is_some() {
-            self.index += 1;
-        }
-        c
+        unsafe { Some(char::from_u32_unchecked(self.next_code_point_u32()?)) }
     }
 
-    pub fn advance_n(&mut self, n: usize) -> Option<&'a [char]> {
-        let slice = self.slice.get(self.index..n);
-        if slice.is_some() {
-            self.index += n;
-        }
-        slice
-    }
-
-    pub fn advance_while(&mut self, mut pred: impl FnMut(char) -> bool) -> &'a [char] {
+    pub fn advance_n(&mut self, n: usize) -> Option<&'a str> {
         let begin = self.index;
-        while !self.is_empty() && pred(self.peek0().unwrap()) {
-            self.index += 1;
+        for _ in 0..n {
+            unsafe { utf8::next_code_point(self.slice.as_bytes(), &mut self.index)?; }
+        }
+        Some(&self.slice[begin..self.index])
+    }
+
+    pub fn advance_while(&mut self, mut pred: impl FnMut(char) -> bool) -> &'a str {
+        let begin = self.index;
+
+        let mut next_codepoint_index = self.index;
+        loop {
+            unsafe {
+                match utf8::next_code_point(self.slice.as_bytes(), &mut next_codepoint_index) {
+                    Some(code_point) if pred(char::from_u32_unchecked(code_point)) => self.index = next_codepoint_index,
+                    _ => break,
+                }
+            }
         }
         &self.slice[begin..self.index]
     }
@@ -63,7 +89,7 @@ impl<'a> Cursor<'a> {
 
     #[inline]
     pub fn iter<'c>(&'c self) -> Iter<'a, 'c> {
-        Iter(0, self)
+        Iter(self.index, self)
     }
 }
 
@@ -73,8 +99,6 @@ impl<'a, 'b> Iterator for Iter<'a, 'b> {
     type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.1.slice.get(self.0 + self.1.index).copied();
-        self.0 += 1;
-        c
+        unsafe { utf8::next_code_point(self.1.slice.as_bytes(), &mut self.0).map(|v| char::from_u32_unchecked(v)) }
     }
 }

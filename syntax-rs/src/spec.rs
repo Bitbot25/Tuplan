@@ -1,3 +1,5 @@
+// TODO: Warn when unicode combining characters are detected as they may be misinterpreted by the compiler.
+
 use crate::parse::{Parse, ParseStream};
 use crate::Result;
 use unicode_xid::UnicodeXID;

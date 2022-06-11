@@ -1,4 +1,4 @@
-# **P**ang **V**irtual **M**achine - PVM
+# Tuplan
 
 A virtual machine and language making utility.
 

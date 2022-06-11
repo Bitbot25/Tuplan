@@ -6,6 +6,8 @@ use crate::utf8;
 // TODO: Add a new feature called u8_char_processing that will disable iterating over unicode codepoints and just iterate over the bytes.
 // TODO: Add a new feature called pre_char_processing that will read all the unicode chars before actually parsing.
 // TODO: Add a new feature called dynamic_char_processing that will dynamically read the chars just like we do here. vvvvvvvvvv
+
+// TODO: Make this more similar to std::io::Cursor by implementing Seek, Read and Write.
 #[derive(Copy, Clone)]
 pub struct Cursor<'a> {
     slice: &'a str,

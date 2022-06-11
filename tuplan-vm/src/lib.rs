@@ -22,16 +22,16 @@ pub struct Vm {
 
 use std::io::Read;
 
-mod instristic {
+mod intristic {
     use super::Item;
 
-    pub fn add_u(a: Item, b: Item) -> Item {
+    pub fn add_u64(a: Item, b: Item) -> Item {
         let a: u64 = *a.as_ref();
         let b: u64 = *b.as_ref();
         Item::U64(a + b)
     }
 
-    pub fn dump_u(item: Item) {
+    pub fn dump_u64(item: Item) {
         let u: u64 = *item.as_ref();
         println!("{}", u);
     }
@@ -59,12 +59,12 @@ impl Vm {
                 INST_ADD_U64 => {
                     let b = self.stack.pop().unwrap_unchecked();
                     let a = self.stack.pop().unwrap_unchecked();
-                    let result = instristic::add_u(a, b);
+                    let result = intristic::add_u64(a, b);
                     self.stack.push(result);
                 },
                 INST_DUMP_U64 => {
                     let item = self.stack.pop().unwrap_unchecked();
-                    instristic::dump_u(item);
+                    intristic::dump_u64(item);
                 },
                 _ => panic!("Unknown instruction: {}", inst)
             }

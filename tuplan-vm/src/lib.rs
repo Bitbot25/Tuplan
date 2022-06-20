@@ -1,43 +1,83 @@
-use tuplan_ir::{ByteStream, INST_ADD_U64, INST_DUMP_U64, INST_POP, INST_PUSH_U64};
+use tuplan_ir::{ByteStream, Inst, FromDiscriminant};
+use std::io::Read;
+use std::mem;
 
-// TODO: We might aswell make this a union. We don't need the type at runtime.
 #[derive(Debug)]
+#[cfg(feature = "checked")]
 pub enum Item {
     U64(u64),
+    U32(u32),
 }
 
-impl AsRef<u64> for Item {
-    fn as_ref(&self) -> &u64 {
+#[cfg(feature = "checked")]
+impl Item {
+    #[inline]
+    pub fn from_u64(val: u64) -> Item {
+        Item::U64(val)
+    }
+
+    #[inline]
+    pub fn from_u32(val: u32) -> Item {
+        Item::U32(val)
+    }
+
+    #[inline]
+    pub fn u64(&self) -> u64 {
         match self {
-            Item::U64(val) => val,
-            _ => panic!("{:?} cannot dereference to a u64.", self),
+            Item::U64(val) => *val,
+            _ => panic!("Expected U64"),
+        }
+    }
+
+    #[inline]
+    pub fn u32(&self) -> u32 {
+        match self {
+            Item::U32(val) => *val,
+            _ => panic!("Expected U32"),
         }
     }
 }
 
+#[cfg(not(feature = "checked"))]
+pub union Item {
+    u64: u64,
+    u32: u32,
+}
+
+#[cfg(not(feature = "checked"))]
+impl Item {
+    #[inline]
+    pub fn from_u64(val: u64) -> Item {
+        Item { u64: val }
+    }
+    
+    #[inline]
+    pub fn from_u32(val: u32) -> Item {
+        Item { u32: val }
+    }
+
+    #[inline]
+    pub unsafe fn u64(&self) -> u64 {
+        self.u64
+    }
+
+    #[inline]
+    pub unsafe fn u32(&self) -> u32 {
+        self.u32
+    }
+}
+
+// TODO: Make item not take up so much space without adding performance overhead
 pub struct Vm {
     code: ByteStream,
     stack: Vec<Item>,
 }
 
-use std::io::Read;
-
-mod intristic {
-    use super::Item;
-
-    pub fn add_u64(a: Item, b: Item) -> Item {
-        let a: u64 = *a.as_ref();
-        let b: u64 = *b.as_ref();
-        Item::U64(a + b)
-    }
-
-    pub fn dump_u64(item: Item) {
-        let u: u64 = *item.as_ref();
-        println!("{}", u);
-    }
-}
-
 impl Vm {
+
+    #[inline]
+    #[cold]
+    #[must_use]
     pub fn new(code: ByteStream) -> Vm {
         Vm {
             code,
@@ -45,31 +85,46 @@ impl Vm {
         }
     }
 
+    #[cfg(feature = "checked")]
+    pub fn run(&mut self) {
+        todo!()
+    }
+
+    #[cfg(not(feature = "checked"))]
+    #[allow(unused_must_use)]
     pub unsafe fn run(&mut self) {
-        let mut inst = [0; 1];
-        while let Ok(_) = self.code.read_exact(&mut inst) {
-            let inst = inst[0];
-            match inst {
-                INST_PUSH_U64 => {
-                    let mut bytes = [0; 8];
-                    self.code.read_exact(&mut bytes).unwrap_unchecked();
+        while let Some(header) = self.code.read_byte() {
+            match Inst::from_discriminant(header).unwrap_unchecked() {
+                Inst::PushU64 => {
+                    let mut bytes = [0u8; 8];
+                    self.code.read_into_const(&mut bytes);
+
                     let value = u64::from_le_bytes(bytes);
-                    self.stack.push(Item::U64(value));
+                    self.stack.push(Item::from_u64(value));
                 },
-                INST_POP => {
+                Inst::Pop => {
                     self.stack.pop();
                 },
-                INST_ADD_U64 => {
-                    let b = self.stack.pop().unwrap_unchecked();
-                    let a = self.stack.pop().unwrap_unchecked();
-                    let result = intristic::add_u64(a, b);
-                    self.stack.push(result);
+                Inst::Ret => {
+                    let addr = self.stack.pop().unwrap_unchecked();
+                    self.code.jump_unchecked(addr.u32() as usize);
                 },
-                INST_DUMP_U64 => {
-                    let item = self.stack.pop().unwrap_unchecked();
-                    intristic::dump_u64(item);
+                Inst::Goto => {
+                    let mut addr_bytes = [0u8; 4];
+                    self.code.read_into_const(&mut addr_bytes);
+
+                    let addr = u32::from_le_bytes(addr_bytes);
+                    self.code.jump_unchecked(addr as usize);
                 },
-                _ => panic!("Unknown instruction: {}", inst)
+                Inst::AddU64 => {
+                    let b = self.stack.pop().unwrap_unchecked().u64();
+                    let a = self.stack.pop().unwrap_unchecked().u64();
+                    self.stack.push(Item::from_u64(a + b));
+                },
+                Inst::PeekU64 => {
+                    let val = self.stack.last().unwrap_unchecked().u64();
+                    println!("{}", val)
+                }
             }
         }
     }

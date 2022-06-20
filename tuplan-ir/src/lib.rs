@@ -1,16 +1,35 @@
+//! Tuplan IR specification
+//! 
+//! `localset` - `(stack val: any), (inline slot: u32)` Sets the stack slot `slot` to `val`.
+//! `localcopy` - `(inline slot: u32)` - Pushes the stack slot `slot` onto the top of the stack.
+//! `pushu64` - `(inline val: u64)` Pushes `val` onto the stack.
+//! `pop` - Pops any value off of the stack.
+//! `ret` - `(stack retptr: u32)` Returns to `retptr`.
+//! `goto` - `(inline loc: u32)` Moves the instruction pointer to `loc`.
+//! `addu64` - `(stack a: u64), (stack b: u64)` Pushes a new `u64` onto the stack which is the result of adding `a` and `b`.
+//! `peeku64` - `(stack val: u64)` Displays a u64 to stdout without popping it off the stack.
+
+
 use std::ops::Index;
 use std::mem;
-use disc::disc;
-pub use disc::FromDiscriminant;
+use disc::{FromDiscriminant, disc};
 
 #[disc]
 pub enum Inst {
+    LocalSet,
+    LocalCopy,
     PushU64,
     Pop,
     Ret,
     Goto,
+    GotoIf,
+    GotoIfNot,
     AddU64,
+    SubU64,
+    LtU64,
+    GtU64,
     PeekU64,
+    PeekBool,
 }
 
 pub struct ByteStream {
@@ -138,6 +157,16 @@ pub fn disassemble_one(bytes: &ByteStream, start: usize, buffer: &mut String) ->
     let inst: Inst = Inst::from_discriminant(header).expect("Invalid bytecode: Expected instruction header.");
 
     match inst {
+        Inst::LocalSet => {
+            let (slot, index) = get_u32(bytes, start + 1);
+            buffer.push_str(&*format!("{start} | localset {slot}"));
+            index
+        },
+        Inst::LocalCopy => {
+            let (slot, index) = get_u32(bytes, start + 1);
+            buffer.push_str(&*format!("{start} | localcopy {slot}"));
+            index
+        },
         Inst::PushU64 => {
             let (val, index) = get_u64(bytes, start + 1);
             buffer.push_str(&*format!("{start} | pushu64 {val}"));
@@ -150,8 +179,22 @@ pub fn disassemble_one(bytes: &ByteStream, start: usize, buffer: &mut String) ->
             buffer.push_str(&*format!("{start} | goto {val}"));
             index
         },
+        Inst::GotoIf => {
+            let (val, index) = get_u32(bytes, start + 1);
+            buffer.push_str(&*format!("{start} | gotoif {val}"));
+            index
+        },
+        Inst::GotoIfNot => {
+            let (val, index) = get_u32(bytes, start + 1);
+            buffer.push_str(&*format!("{start} | gotoif {val}"));
+            index
+        }
         Inst::AddU64 => simple("addu64", start, buffer),
+        Inst::SubU64 => simple("subu64", start, buffer),
+        Inst::LtU64 => simple("ltu64", start, buffer),
+        Inst::GtU64 => simple("gtu64", start, buffer),
         Inst::PeekU64 => simple("peeku64", start, buffer),
+        Inst::PeekBool => simple("peekbool", start, buffer),
     }
 }
 

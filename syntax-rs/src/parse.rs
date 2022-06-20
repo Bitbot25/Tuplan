@@ -1,8 +1,8 @@
+#[cfg(feature = "debug")]
+use crate::debug::DebugTap;
 #[cfg(feature = "span")]
 use crate::Span;
 use crate::{cursor::Cursor, snapshot::Snapshot, spec, Result};
-#[cfg(feature = "debug")]
-use crate::debug::DebugTap;
 
 pub trait Parse: Sized {
     fn parse(stream: &mut ParseStream) -> Result<Self>;

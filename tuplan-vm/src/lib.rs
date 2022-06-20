@@ -1,4 +1,4 @@
-use tuplan_ir::{ByteStream, INST_ADD_U64, INST_DUMP_U64, INST_PUSH_U64, INST_POP};
+use tuplan_ir::{ByteStream, INST_ADD_U64, INST_DUMP_U64, INST_POP, INST_PUSH_U64};
 
 // TODO: We might aswell make this a union. We don't need the type at runtime.
 #[derive(Debug)]
@@ -10,7 +10,7 @@ impl AsRef<u64> for Item {
     fn as_ref(&self) -> &u64 {
         match self {
             Item::U64(val) => val,
-            _ => panic!("{:?} cannot dereference to a u64.", self)
+            _ => panic!("{:?} cannot dereference to a u64.", self),
         }
     }
 }
@@ -39,7 +39,10 @@ mod intristic {
 
 impl Vm {
     pub fn new(code: ByteStream) -> Vm {
-        Vm { code, stack: Vec::new() }
+        Vm {
+            code,
+            stack: Vec::new(),
+        }
     }
 
     pub unsafe fn run(&mut self) {

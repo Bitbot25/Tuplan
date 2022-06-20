@@ -1,4 +1,7 @@
-use std::{io::{Cursor, Write, Read}, borrow::Cow};
+use std::{
+    borrow::Cow,
+    io::{Cursor, Read, Write},
+};
 
 pub const INST_PUSH_U64: u8 = 0;
 pub const INST_POP: u8 = 1;
@@ -18,7 +21,7 @@ pub fn bytestream_with(bytes: &[u8]) -> ByteStream {
 
 pub fn disassemble(mut bytes: &[u8]) -> String {
     let mut acc = String::with_capacity(bytes.len() * 8);
-    while bytes.len() > 0 {
+    while !bytes.is_empty() {
         let (cont, disassembly) = disassemble_single(bytes);
         acc.push_str(&disassembly);
         bytes = &bytes[cont..];
@@ -33,13 +36,14 @@ pub fn disassemble_single(bytes: &[u8]) -> (usize, Cow<str>) {
     }
 
     match bytes[0] {
-        INST_PUSH_U64 => { 
+        INST_PUSH_U64 => {
             let mut u64_bytes = [0; 8];
-            Read::read_exact(&mut &bytes[1..9], &mut u64_bytes).expect("Invalid bytecode sequence.");
+            Read::read_exact(&mut &bytes[1..9], &mut u64_bytes)
+                .expect("Invalid bytecode sequence.");
             let value = u64::from_le_bytes(u64_bytes);
 
             (9, Cow::Owned(format!("PUSH_U64 {}", value)))
-        },
+        }
         INST_POP => simple_instruction("POP"),
         INST_ADD_U64 => simple_instruction("ADD_U64"),
         INST_DUMP_U64 => simple_instruction("DUMP_U64"),

@@ -1,6 +1,6 @@
 #![feature(cursor_remaining)]
 
-use tuplan_ir::{INST_PUSH_U64, INST_DUMP_U64, INST_ADD_U64, disassemble};
+use tuplan_ir::{disassemble, INST_ADD_U64, INST_DUMP_U64, INST_PUSH_U64};
 use tuplan_vm::Vm;
 
 fn main() {

@@ -1,6 +1,4 @@
 use tuplan_ir::{ByteStream, Inst, FromDiscriminant};
-use std::io::Read;
-use std::mem;
 
 #[derive(Debug)]
 #[cfg(feature = "checked")]
@@ -74,7 +72,6 @@ pub struct Vm {
 }
 
 impl Vm {
-
     #[inline]
     #[cold]
     #[must_use]

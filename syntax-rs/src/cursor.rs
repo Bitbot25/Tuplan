@@ -44,7 +44,6 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    #[inline]
     pub fn peek_n(&self, n: usize) -> Option<&'a str> {
         let begin = self.index;
         let mut virtual_index = self.index;

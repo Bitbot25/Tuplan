@@ -1,5 +1,5 @@
 //! Tuplan IR specification
-//! 
+//!
 //! `localset` - `(stack val: any), (inline slot: u32)` Sets the stack slot `slot` to `val`.
 //! `localcopy` - `(inline slot: u32)` - Pushes the stack slot `slot` onto the top of the stack.
 //! `pushu64` - `(inline val: u64)` Pushes `val` onto the stack.
@@ -9,10 +9,9 @@
 //! `addu64` - `(stack a: u64), (stack b: u64)` Pushes a new `u64` onto the stack which is the result of adding `a` and `b`.
 //! `peeku64` - `(stack val: u64)` Displays a u64 to stdout without popping it off the stack.
 
-
-use std::ops::Index;
+use disc::{disc, FromDiscriminant};
 use std::mem;
-use disc::{FromDiscriminant, disc};
+use std::ops::Index;
 
 #[disc]
 pub enum Inst {
@@ -41,7 +40,10 @@ impl ByteStream {
     #[inline]
     #[cold]
     pub fn new() -> ByteStream {
-        ByteStream { bytes: Vec::new(), index: 0 }
+        ByteStream {
+            bytes: Vec::new(),
+            index: 0,
+        }
     }
 
     #[inline]
@@ -62,7 +64,7 @@ impl ByteStream {
         let byte = unsafe { *self.bytes.get_unchecked(self.index) };
         self.index += 1;
         Some(byte)
-    }   
+    }
 
     #[must_use]
     pub fn read_into_const<const N: usize>(&mut self, buf: &mut [u8; N]) -> bool {
@@ -70,7 +72,11 @@ impl ByteStream {
             return false;
         }
 
-        *buf = unsafe { self.bytes[self.index..self.index+N].try_into().unwrap_unchecked() };
+        *buf = unsafe {
+            self.bytes[self.index..self.index + N]
+                .try_into()
+                .unwrap_unchecked()
+        };
         self.index += N;
         return true;
     }
@@ -88,7 +94,7 @@ impl ByteStream {
             return false;
         }
 
-        *buf = &self.bytes[self.index..self.index+n];
+        *buf = &self.bytes[self.index..self.index + n];
         return true;
     }
 
@@ -153,37 +159,40 @@ pub fn disassemble_one(bytes: &ByteStream, start: usize, buffer: &mut String) ->
         index + 1
     }
 
-    let header = bytes.get(start).expect("Invalid bytecode: Expected instruction header.");
-    let inst: Inst = Inst::from_discriminant(header).expect("Invalid bytecode: Expected instruction header.");
+    let header = bytes
+        .get(start)
+        .expect("Invalid bytecode: Expected instruction header.");
+    let inst: Inst =
+        Inst::from_discriminant(header).expect("Invalid bytecode: Expected instruction header.");
 
     match inst {
         Inst::LocalSet => {
             let (slot, index) = get_u32(bytes, start + 1);
             buffer.push_str(&*format!("{start} | localset {slot}"));
             index
-        },
+        }
         Inst::LocalCopy => {
             let (slot, index) = get_u32(bytes, start + 1);
             buffer.push_str(&*format!("{start} | localcopy {slot}"));
             index
-        },
+        }
         Inst::PushU64 => {
             let (val, index) = get_u64(bytes, start + 1);
             buffer.push_str(&*format!("{start} | pushu64 {val}"));
             index
-        },
+        }
         Inst::Pop => simple("pop", start, buffer),
         Inst::Ret => simple("ret", start, buffer),
         Inst::Goto => {
             let (val, index) = get_u32(bytes, start + 1);
             buffer.push_str(&*format!("{start} | goto {val}"));
             index
-        },
+        }
         Inst::GotoIf => {
             let (val, index) = get_u32(bytes, start + 1);
             buffer.push_str(&*format!("{start} | gotoif {val}"));
             index
-        },
+        }
         Inst::GotoIfNot => {
             let (val, index) = get_u32(bytes, start + 1);
             buffer.push_str(&*format!("{start} | gotoif {val}"));
@@ -201,21 +210,21 @@ pub fn disassemble_one(bytes: &ByteStream, start: usize, buffer: &mut String) ->
 fn get_u32(bytes: &ByteStream, start: usize) -> (u32, usize) {
     let mut u32_b = [0; mem::size_of::<u32>()];
     u32_b[0] = bytes[start];
-    u32_b[1] = bytes[start+1];
-    u32_b[2] = bytes[start+2];
-    u32_b[3] = bytes[start+3];
+    u32_b[1] = bytes[start + 1];
+    u32_b[2] = bytes[start + 2];
+    u32_b[3] = bytes[start + 3];
     (u32::from_le_bytes(u32_b), start + mem::size_of::<u32>())
 }
 
 fn get_u64(bytes: &ByteStream, start: usize) -> (u64, usize) {
     let mut u64_b = [0; mem::size_of::<u64>()];
     u64_b[0] = bytes[start];
-    u64_b[1] = bytes[start+1];
-    u64_b[2] = bytes[start+2];
-    u64_b[3] = bytes[start+3];
-    u64_b[4] = bytes[start+4];
-    u64_b[5] = bytes[start+5];
-    u64_b[6] = bytes[start+6];
-    u64_b[7] = bytes[start+7];
+    u64_b[1] = bytes[start + 1];
+    u64_b[2] = bytes[start + 2];
+    u64_b[3] = bytes[start + 3];
+    u64_b[4] = bytes[start + 4];
+    u64_b[5] = bytes[start + 5];
+    u64_b[6] = bytes[start + 6];
+    u64_b[7] = bytes[start + 7];
     (u64::from_le_bytes(u64_b), start + mem::size_of::<u64>())
 }

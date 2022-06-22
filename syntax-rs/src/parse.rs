@@ -7,7 +7,6 @@ use crate::{cursor::Cursor, snapshot::Snapshot, spec, Result};
 pub trait Parse: Sized {
     fn parse(stream: &mut ParseStream) -> Result<Self>;
 }
-
 pub struct ParseStream<'a> {
     cursor: Cursor<'a>,
 }

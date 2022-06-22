@@ -1,21 +1,28 @@
 use llvm::{
-    analysis::{LLVMVerifyModule, LLVMVerifierFailureAction::LLVMAbortProcessAction},
+    analysis::{LLVMVerifierFailureAction::LLVMAbortProcessAction, LLVMVerifyModule},
     core::{
         LLVMAddFunction, LLVMAppendBasicBlock, LLVMBuildAdd, LLVMBuildRet, LLVMContextCreate,
-        LLVMCreateBuilder, LLVMFloatTypeInContext, LLVMFunctionType, LLVMGetBasicBlockName,
-        LLVMGetModuleIdentifier, LLVMGetParam, LLVMGetValueName, LLVMGetValueName2, LLVMInt64Type,
-        LLVMInt64TypeInContext, LLVMModuleCreateWithNameInContext, LLVMPositionBuilderAtEnd, LLVMDisposeMessage, LLVMDisposeBuilder, LLVMDumpModule, LLVMDisposeModule, LLVMContextDispose,
+        LLVMContextDispose, LLVMCreateBuilder, LLVMDisposeBuilder, LLVMDisposeMessage,
+        LLVMDisposeModule, LLVMDumpModule, LLVMFloatTypeInContext, LLVMFunctionType,
+        LLVMGetBasicBlockName, LLVMGetModuleIdentifier, LLVMGetParam, LLVMGetValueName,
+        LLVMGetValueName2, LLVMInt64Type, LLVMInt64TypeInContext,
+        LLVMModuleCreateWithNameInContext, LLVMPositionBuilderAtEnd,
+    },
+    execution_engine::{
+        LLVMCreateExecutionEngineForModule, LLVMDisposeExecutionEngine, LLVMExecutionEngineRef,
+        LLVMGetFunctionAddress, LLVMLinkInMCJIT,
     },
     prelude::{
         LLVMBasicBlockRef, LLVMBuilderRef, LLVMContextRef, LLVMModuleRef, LLVMTypeRef, LLVMValueRef,
     },
-    LLVMValueKind, execution_engine::{LLVMExecutionEngineRef, LLVMLinkInMCJIT, LLVMCreateExecutionEngineForModule, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress}, target::{LLVM_InitializeNativeTarget, LLVM_InitializeNativeAsmPrinter},
+    target::{LLVM_InitializeNativeAsmPrinter, LLVM_InitializeNativeTarget},
+    LLVMValueKind,
 };
 use llvm_sys as llvm;
 use std::{
     ffi::{CStr, CString},
-    mem,
-    ptr, marker::PhantomData,
+    marker::PhantomData,
+    mem, ptr,
 };
 
 #[repr(C)]
@@ -90,9 +97,7 @@ impl LLVMContext {
 
 impl Drop for LLVMContext {
     fn drop(&mut self) {
-        unsafe {
-            LLVMContextDispose(self.inner)
-        }
+        unsafe { LLVMContextDispose(self.inner) }
     }
 }
 
@@ -132,9 +137,7 @@ impl LLVMModule {
     }
 
     pub fn dump_ir_to_stdout(&self) {
-        unsafe {
-            LLVMDumpModule(self.inner)
-        }
+        unsafe { LLVMDumpModule(self.inner) }
     }
 }
 
@@ -222,14 +225,17 @@ impl LLVMExecutionEngine {
             if LLVMCreateExecutionEngineForModule(&mut ee, module.inner, &mut error) != 0 {
                 return Err(CString::from_raw(error));
             }
-            Ok(LLVMExecutionEngine { inner: ee, _marker: PhantomData })
+            Ok(LLVMExecutionEngine {
+                inner: ee,
+                _marker: PhantomData,
+            })
         }
     }
 
     pub unsafe fn get_function_as<S: Into<Vec<u8>>, F>(&self, name: S) -> F {
         let cstring = CString::new(name).unwrap();
         mem::transmute_copy(&LLVMGetFunctionAddress(self.inner, cstring.as_ptr()))
-    } 
+    }
 }
 
 pub fn llvm_get_function_ty(ret: &LLVMType, params: &mut [LLVMType]) -> LLVMType {

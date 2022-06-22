@@ -1,4 +1,7 @@
-use tuplan_llvm::{llvm_get_function_ty, LLVMBuilder, LLVMContext, LLVMModule, llvm_init_jit_with_printer, LLVMExecutionEngine, llvm_init_jit};
+use tuplan_llvm::{
+    llvm_get_function_ty, llvm_init_jit, llvm_init_jit_with_printer, LLVMBuilder, LLVMContext,
+    LLVMExecutionEngine, LLVMModule,
+};
 
 fn main() {
     let mut ctx = LLVMContext::new();

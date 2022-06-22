@@ -9,6 +9,7 @@ pub mod cursor;
 pub mod debug;
 pub mod macros;
 pub mod parse;
+pub mod ringbuf;
 pub mod snapshot;
 pub mod spec;
 mod utf8;

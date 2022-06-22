@@ -85,7 +85,7 @@ pub unsafe fn ringbuf_alloc_uninit<T>(cap: usize) -> NonNull<T> {
     assert_eq!(base, free_addr);
     println!("base={:?}", base);
 
-    if MapViewOfFileEx(mapping, FILE_MAP_ALL_ACCESS, 0, 0, cap, base.add(cap)).is_null() {
+    if MapViewOfFileEx(mapping, FILE_MAP_ALL_ACCESS, 0, 0, cap, base.cast::<T>().add(cap).cast()).is_null() {
         UnmapViewOfFile(base);
         CloseHandle(mapping);
         eprintln!("error code={}", GetLastError());

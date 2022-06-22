@@ -6,5 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-llvm-sys = { path = "../llvm-sys.rs", version = "150.0.0" }
+llvm-sys = { path = "../llvm-sys", version = "150.0.0" }
 libc = "0.2.126"

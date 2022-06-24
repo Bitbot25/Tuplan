@@ -1,2 +1,3 @@
 [workspace]
-members = [ "syntax-rs", "tuplan-ir", "tuplan-vm" ]
+# "tuplan-llvm"
+members = [ "syntax-rs", "tuplan-ir", "tuplan-vm", "tuplan-llvm" ]

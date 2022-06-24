@@ -13,3 +13,4 @@ perf = []
 
 [dependencies]
 tuplan-ir = { path = "../tuplan-ir", version = "0.1.0" }
+disc = "0.1.0"

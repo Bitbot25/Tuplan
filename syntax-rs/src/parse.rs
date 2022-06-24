@@ -4,6 +4,7 @@ use crate::{cursor::Cursor, snapshot::Snapshot, spec, Result};
 #[cfg(feature = "debug")]
 use crate::debug::DebugTap;
 
+// TODO:: Add a SkipWhitespaceParse trait. Also remove debugging.
 pub trait Parse: Sized {
     fn parse(stream: &mut ParseStream) -> Result<Self>;
 }

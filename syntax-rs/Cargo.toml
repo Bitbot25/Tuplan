@@ -23,5 +23,4 @@ winapi = { version = "0.3.9", features = ["sysinfoapi", "memoryapi", "handleapi"
 [features]
 char_spec = []
 span = []
-debug = []
 default = ["char_spec", "span"]

@@ -1,5 +1,3 @@
-#[cfg(feature = "debug")]
-use crate::debug::DebugTap;
 #[cfg(feature = "span")]
 use crate::Span;
 use crate::{cursor::Cursor, snapshot::Snapshot, spec, Result};
@@ -39,29 +37,6 @@ impl<'a> ParseStream<'a> {
     }
 
     #[inline]
-    #[cfg(feature = "debug")]
-    pub fn parse<P: Parse>(&mut self) -> Result<P> {
-        P::parse(self).debug_tap(|result| {
-            if result.is_ok() {
-                eprintln!(
-                    "[P] at {}:{}    | Sucessfully parsed item {}.",
-                    file!(),
-                    line!(),
-                    std::any::type_name::<P>()
-                )
-            } else {
-                eprintln!(
-                    "[P] at {}:{}    | Failed to parse item {}.",
-                    file!(),
-                    line!(),
-                    std::any::type_name::<P>()
-                )
-            }
-        })
-    }
-
-    #[inline]
-    #[cfg(not(feature = "debug"))]
     pub fn parse<P: Parse>(&mut self) -> Result<P> {
         P::parse(self)
     }
@@ -105,25 +80,8 @@ impl<'a> ParseStream<'a> {
         // TODO: Maybe we can do something clever here to avoid expensive cloning?
         let original = self.cursor;
         match parse_fn(self) {
-            ok @ Ok(_) => {
-                #[cfg(feature = "debug")]
-                eprintln!(
-                    "[P&R] at {}:{} | Successfully parsed item {}.",
-                    file!(),
-                    line!(),
-                    std::any::type_name::<R>()
-                );
-                ok
-            }
+            ok @ Ok(_) => ok,
             e @ Err(_) => {
-                #[cfg(feature = "debug")]
-                eprintln!(
-                    "[P&R] at {}:{} | Failed to parse item {}. Reversed the cursor to {:?}",
-                    file!(),
-                    line!(),
-                    std::any::type_name::<R>(),
-                    self.cursor
-                );
                 self.cursor = original;
                 e
             }

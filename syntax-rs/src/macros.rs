@@ -51,16 +51,17 @@ macro_rules! simple_tok_spanned {
 
                 impl $crate::parse::Parse for $ident {
                     fn parse(stream: &mut $crate::parse::ParseStream) -> $crate::Result<$ident> {
-                        let index = stream.cur().index();
-                        match stream.cur().peek_n($str.len()) {
-                            Some(array) => if array == $str {
-                                stream.cur().advance_n($str.len());
-                                Ok($ident { span: $crate::Span { begin: index, end: stream.cur().index() } })
-                            } else {
-                                Err($crate::concat_all!("Expected `", $str, "`."))
-                            },
-                            None => Err($crate::concat_all!("Found EOF but expected `", $str, "`.")),
+                        let snap = stream.snapshot();
+                        for c in $str.chars() {
+                            match stream.advance() {
+                                Some(t) if c == t => (),
+                                _ => {
+                                    stream.rewind(snap);
+                                    return Err($crate::concat_all!("Expected ", $str, "."))
+                                }
+                            }
                         }
+                        Ok($ident { span: stream.since(snap) })
                     }
                 }
             } else {

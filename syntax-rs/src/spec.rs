@@ -14,20 +14,20 @@ pub enum LineBreak {
 
 impl Parse for LineBreak {
     fn parse(stream: &mut ParseStream) -> Result<Self> {
-        stream.try_parse(|stream| {
-            let cur = stream.cur();
-            Ok(match cur.advance().ok_or("Expected linebreak.")? {
-                '\u{000D}' => {
-                    if cur.consume('\u{000A}') {
-                        LineBreak::CRLF
-                    } else {
-                        LineBreak::CR
-                    }
+        Ok(match (stream.advance(), stream.snapshot()) {
+            (Some('\u{000D}'), _snap) => {
+                if stream.eats('\u{000A}') {
+                    LineBreak::CRLF
+                } else {
+                    LineBreak::CR
                 }
-                '\u{000A}' => LineBreak::LF,
-                '\u{0085}' => LineBreak::NEL,
-                _ => return Err("Unrecognized linebreak. Expected CRLF, CR, LF or NEL."),
-            })
+            }
+            (Some('\u{000A}'), _snap) => LineBreak::LF,
+            (Some('\u{0085}'), _snap) => LineBreak::NEL,
+            (_, snap) => {
+                stream.rewind(snap);
+                return Err("Unrecognized linebreak. Expected CRLF, CR, LF or NEL.");
+            }
         })
     }
 }

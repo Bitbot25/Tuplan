@@ -5,13 +5,10 @@
 use parse::{Parse, ParseStream};
 
 pub mod compiler;
-pub mod cursor;
 pub mod macros;
 pub mod parse;
-pub mod ringbuf;
 pub mod snapshot;
 pub mod spec;
-mod utf8;
 
 #[cfg(feature = "span")]
 #[derive(Debug, Default, PartialEq, Eq, Hash, Copy, Clone)]

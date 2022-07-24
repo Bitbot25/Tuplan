@@ -3,9 +3,9 @@ use llvm::{
     core::{
         LLVMAddFunction, LLVMAppendBasicBlock, LLVMBuildAdd, LLVMBuildRet, LLVMContextCreate,
         LLVMContextDispose, LLVMCreateBuilder, LLVMDisposeBuilder, LLVMDisposeMessage,
-        LLVMDisposeModule, LLVMDumpModule, LLVMFloatTypeInContext, LLVMFunctionType,
-        LLVMGetBasicBlockName, LLVMGetModuleIdentifier, LLVMGetParam, LLVMGetValueName,
-        LLVMGetValueName2, LLVMInt64Type, LLVMInt64TypeInContext,
+        LLVMDumpModule, LLVMFloatTypeInContext, LLVMFunctionType,
+        LLVMGetBasicBlockName, LLVMGetModuleIdentifier, LLVMGetParam,
+        LLVMGetValueName2, LLVMInt64TypeInContext,
         LLVMModuleCreateWithNameInContext, LLVMPositionBuilderAtEnd,
     },
     execution_engine::{
@@ -16,7 +16,6 @@ use llvm::{
         LLVMBasicBlockRef, LLVMBuilderRef, LLVMContextRef, LLVMModuleRef, LLVMTypeRef, LLVMValueRef,
     },
     target::{LLVM_InitializeNativeAsmPrinter, LLVM_InitializeNativeTarget},
-    LLVMValueKind,
 };
 use llvm_sys as llvm;
 use std::{
@@ -51,10 +50,8 @@ impl LLVMValue {
 
     // Unsafe because you can get multiple references to the same value.
     pub unsafe fn get_param(&self, n: usize) -> LLVMValue {
-        unsafe {
-            LLVMValue {
-                inner: LLVMGetParam(self.inner, n as libc::c_uint),
-            }
+        LLVMValue {
+            inner: LLVMGetParam(self.inner, n as libc::c_uint),
         }
     }
 
